@@ -28,7 +28,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
+  
     await client.connect();
 
 
@@ -36,21 +36,67 @@ const foodsCollection = client.db('foodDB').collection('foods');
 // get
 app.get('/foods', async (req, res) => {
   try {
-    const result = await foodsCollection.find().toArray();
+    const result = await foodsCollection.find()
+      .sort({ expiryDate: 1 })
+      .toArray();
     res.send(result);
   } catch (error) {
+    console.error(error);
     res.status(500).send({ error: 'Unable to fetch foods' });
   }
 });
 
-// post
-app.post('/foods', async(req,res)=>{
-    const newFood = req.body;
-    console.log("Recieved food:", newFood);
-    const result = await foodsCollection.insertOne(newFood);
-    res.send(result);
+// nearly-expiry
+app.get('/nearly-expiry', async (req, res) => {
+  try {
+    const now = new Date();
+    const fiveDaysLater = new Date();
+    fiveDaysLater.setDate(now.getDate() + 5);
+
+   
+    const allFoods = await foodsCollection.find().toArray();
+
+    const nearlyExpiry = [];
+    for (const food of allFoods) {
+      const expDate = new Date(food.expiryDate); 
+      if (expDate >= now && expDate <= fiveDaysLater) {
+        nearlyExpiry.push(food);
+      }
+    }
+
     
-})
+    nearlyExpiry.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+    res.send(nearlyExpiry.slice(0, 6));
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ error: 'Unable to fetch nearly expiry foods' });
+  }
+});
+
+
+
+;
+
+
+
+
+
+
+
+
+// post
+app.post('/foods', async (req, res) => {
+  const newFood = req.body;
+
+  // convert expiryDate to Date object
+  if (newFood.expiryDate) {
+    newFood.expiryDate = new Date(newFood.expiryDate);
+  }
+
+  const result = await foodsCollection.insertOne(newFood);
+  res.send(result);
+});
+
 
 
 
