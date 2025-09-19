@@ -33,10 +33,20 @@ async function run() {
 
 
 const foodsCollection = client.db('foodDB').collection('foods');
+// get
+app.get('/foods', async (req, res) => {
+  try {
+    const result = await foodsCollection.find().toArray();
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ error: 'Unable to fetch foods' });
+  }
+});
 
+// post
 app.post('/foods', async(req,res)=>{
     const newFood = req.body;
-    console.log("Recieved group:", newFood);
+    console.log("Recieved food:", newFood);
     const result = await foodsCollection.insertOne(newFood);
     res.send(result);
     
@@ -53,7 +63,7 @@ app.post('/foods', async(req,res)=>{
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
