@@ -172,11 +172,25 @@ app.delete('/foods/:id', async (req,res)=>{
 })
 
 
+app.get('/foods', async (req, res) => {
+  const { search, category, page = 0, limit = 9 } = req.query;
+  const query = {};
+  if (search) {
+    query.$or = [
+      { foodTitle: { $regex: search, $options: 'i' } },
+      { foodCategory: { $regex: search, $options: 'i' } }
+    ];
+  }
+  if (category && category !== 'all') query.foodCategory = category;
+  const cursor = foodsCollection.find(query).skip(page*limit).limit(parseInt(limit));
+  const items = await cursor.toArray();
+  res.send(items);
+});
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
    
   }
