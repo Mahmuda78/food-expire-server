@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -103,10 +103,12 @@ app.get('/expired', async (req, res) => {
 
 ;
 
-
-
-
-
+app.get('/foods/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id:new ObjectId(id)}
+      const result = await foodsCollection.findOne(query);
+      res.send(result)
+    })
 
 
 
@@ -114,17 +116,30 @@ app.get('/expired', async (req, res) => {
 app.post('/foods', async (req, res) => {
   const newFood = req.body;
 
-  // convert expiryDate to Date object
+  
   if (newFood.expiryDate) {
     newFood.expiryDate = new Date(newFood.expiryDate);
   }
-
   const result = await foodsCollection.insertOne(newFood);
   res.send(result);
 });
 
 
+app.post("/foods/:id/notes", async (req, res) => {
+  
+    const id = req.params.id;
+    const { userEmail, text } = req.body;
 
+    
+    const result = await foodsCollection.findOneAndUpdate(
+      { _id: new ObjectId(id), userEmail }, 
+      { $push: { notes: { userEmail, text, postedAt: new Date() } } },
+      { returnDocument: "after" }
+    );
+
+    res.send(result)
+
+});
 
 
 
@@ -134,8 +149,7 @@ app.post('/foods', async (req, res) => {
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+   
   }
 }
 run().catch(console.dir);
