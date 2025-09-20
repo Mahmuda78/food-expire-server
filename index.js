@@ -124,6 +124,16 @@ app.post('/foods', async (req, res) => {
   res.send(result);
 });
 
+// get user specific food items
+app.get("/my-items/:email", async (req, res) => {
+  const email = req.params.email;
+  
+  
+  const query = { userEmail: email }; 
+  const result = await foodsCollection.find(query).toArray();
+  res.send(result);
+});
+
 
 app.post("/foods/:id/notes", async (req, res) => {
   
@@ -140,7 +150,6 @@ app.post("/foods/:id/notes", async (req, res) => {
     res.send(result)
 
 });
-
 
 
 
